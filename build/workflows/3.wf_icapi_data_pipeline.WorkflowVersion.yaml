@@ -1,0 +1,69 @@
+workflowExternalId: wf_icapi_data_pipeline
+version: '1'
+workflowDefinition:
+  tasks:
+  - externalId: create_asset_hierarchy_extractor_task1
+    type: transformation
+    parameters:
+      transformation:
+        externalId: create_asset_hierarchy
+    retries: 3
+    timeout: 3600
+    onFailure: abortWorkflow
+  - externalId: contextualize_ts_assets_extractor_task2
+    type: transformation
+    parameters:
+      transformation:
+        externalId: contextualize_ts_assets
+    retries: 3
+    timeout: 3600
+    onFailure: abortWorkflow
+    dependsOn:
+    - externalId: create_asset_hierarchy_extractor_task1
+  - externalId: icapi_datapoints_extractor_task3
+    type: function
+    parameters:
+      function:
+        externalId: icapi_datapoints_extractor
+        data:
+          sites:
+          - Sao_Paulo
+          - Houston
+          - Oslo
+          - Kuala_Lumpur
+          - Hannover
+          - Nuremberg
+          - Marseille
+          - Chicago
+          - Rotterdam
+          - London
+          hours: 336
+          backfill: true
+    retries: 3
+    timeout: 3600
+    onFailure: abortWorkflow
+    dependsOn:
+    - externalId: contextualize_ts_assets_extractor_task2
+  - externalId: oee_timeseries_task4
+    type: function
+    parameters:
+      function:
+        externalId: oee_timeseries
+        data:
+          sites:
+          - Houston
+          - Oslo
+          - Kuala_Lumpur
+          - Hannover
+          - Nuremberg
+          - Marseille
+          - Sao_Paulo
+          - Chicago
+          - Rotterdam
+          - London
+          lookback_minutes: 10160
+    retries: 3
+    timeout: 3600
+    onFailure: abortWorkflow
+    dependsOn:
+    - externalId: icapi_datapoints_extractor_task3
